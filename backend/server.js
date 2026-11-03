@@ -4,7 +4,12 @@ const PgStore=require('connect-pg-simple')(session),bcrypt=require('bcryptjs');
 const pool=require('./db'),auth=require('./auth'),app=express();
 const port=Number(process.env.PORT||3000);
 if(!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32)throw Error('Set SESSION_SECRET in .env (at least 32 characters).');
-app.disable('x-powered-by');app.use(express.json({limit:'1mb'}));
+app.disable('x-powered-by');
+
+// Important: Trust Render's reverse proxy for secure sessions
+app.set('trust proxy', 1);
+
+app.use(express.json({ limit: '1mb' }));
 app.use(session({store:new PgStore({pool,createTableIfMissing:true,tableName:'user_sessions'}),
  name:'petal.sid',secret:process.env.SESSION_SECRET,resave:false,saveUninitialized:false,
  cookie:{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',maxAge:8*60*60*1000}}));
